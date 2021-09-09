@@ -347,6 +347,8 @@ class IosARView: NSObject, FlutterPlatformView, ARSCNViewDelegate, UIGestureReco
         let node = sceneView.scene.rootNode.childNode(withName: name, recursively: true)
         node?.transform = deserializeMatrix4(transform)
     }
+
+    
     
     @objc func handleTap(_ recognizer: UITapGestureRecognizer) {
         guard let sceneView = recognizer.view as? ARSCNView else {

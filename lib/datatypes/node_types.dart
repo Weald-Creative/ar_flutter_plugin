@@ -2,4 +2,5 @@
 enum NodeType {
   localGLTF2,
   webGLB,
+  fileSystemGLB,
 }

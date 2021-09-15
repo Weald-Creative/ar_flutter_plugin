@@ -58,13 +58,19 @@ class ArModelBuilder: NSObject {
     }
 
     // Creates a node form a given gltf2 model path
-    func makeNodeFromGltf(name: String, modelPath: String, transformation: Array<NSNumber>?) -> SCNNode? {
+    func makeNodeFromGltf(name: String, modelPath: String, useFilePath: Bool = false, transformation: Array<NSNumber>?) -> SCNNode? {
         
         var scene: SCNScene
         let node: SCNNode = SCNNode()
 
         do {
-            let sceneSource = try GLTFSceneSource(named: modelPath)
+            var sceneSource: SCNSceneSource;
+            if useFilePath == true {
+                sceneSource = try GLTFSceneSource(path: modelPath)
+            }else{
+                sceneSource = try GLTFSceneSource(named: modelPath)
+            }
+            
             scene = try sceneSource.scene()
 
             for child in scene.rootNode.childNodes {

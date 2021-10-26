@@ -4,6 +4,8 @@ import 'package:flutter/services.dart';
 
 // Type definitions to enforce a consistent use of the API
 typedef NodeTapResultHandler = void Function(List<String> nodes);
+typedef NodePanStateResultHandler = void Function(String node);
+typedef NodeRotationStateResultHandler = void Function(String node);
 
 /// Manages the all node-related actions of an [ARView]
 class ARObjectManager {
@@ -15,6 +17,12 @@ class ARObjectManager {
 
   /// Callback function that is invoked when the platform detects a tap on a node
   NodeTapResultHandler? onNodeTap;
+  NodePanStateResultHandler? onPanStart;
+  NodePanStateResultHandler? onPanChange;
+  NodePanStateResultHandler? onPanEnd;
+  NodeRotationStateResultHandler? onRotationStart;
+  NodeRotationStateResultHandler? onRotationChange;
+  NodeRotationStateResultHandler? onRotationEnd;
 
   ARObjectManager(int id, {this.debug = false}) {
     _channel = MethodChannel('arobjects_$id');
@@ -39,6 +47,42 @@ class ARObjectManager {
             onNodeTap!(tappedNodes
                 .map((tappedNode) => tappedNode.toString())
                 .toList());
+          }
+          break;
+        case 'onPanStart':
+          if (onPanStart != null) {
+            final tappedNode = call.arguments as String;
+            onPanStart!(tappedNode);
+          }
+          break;
+        case 'onPanChange':
+          if (onPanChange != null) {
+            final tappedNode = call.arguments as String;
+            onPanChange!(tappedNode);
+          }
+          break;
+        case 'onPanEnd':
+          if (onPanEnd != null) {
+            final tappedNode = call.arguments as String;
+            onPanEnd!(tappedNode);
+          }
+          break;
+        case 'onRotationStart':
+          if (onRotationStart != null) {
+            final tappedNode = call.arguments as String;
+            onRotationStart!(tappedNode);
+          }
+          break;
+        case 'onRotationChange':
+          if (onRotationChange != null) {
+            final tappedNode = call.arguments as String;
+            onRotationChange!(tappedNode);
+          }
+          break;
+        case 'onRotationEnd':
+          if (onRotationEnd != null) {
+            final tappedNode = call.arguments as String;
+            onRotationEnd!(tappedNode);
           }
           break;
         default:

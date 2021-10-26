@@ -1,3 +1,4 @@
+import 'dart:typed_data';
 import 'package:ar_flutter_plugin/models/ar_hittest_result.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -72,19 +73,25 @@ class ARSessionManager {
   /// [customPlaneTexturePath] refers to flutter assets from the app that is calling this function, NOT to assets within this plugin. Make sure
   /// the assets are correctly registered in the pubspec.yaml of the parent app (e.g. the ./example app in this plugin's repo)
   onInitialize({
+    bool showAnimatedGuide = true,
     bool showFeaturePoints = false,
     bool showPlanes = true,
     String? customPlaneTexturePath,
     bool showWorldOrigin = false,
     bool handleTaps = true,
+    bool handlePans = false, // nodes are not draggable by default
+    bool handleRotation = false, // nodes can not be rotated by default
   }) {
     _channel.invokeMethod<void>('init', {
+      'showAnimatedGuide': showAnimatedGuide,
       'showFeaturePoints': showFeaturePoints,
       'planeDetectionConfig': planeDetectionConfig.index,
       'showPlanes': showPlanes,
       'customPlaneTexturePath': customPlaneTexturePath,
       'showWorldOrigin': showWorldOrigin,
       'handleTaps': handleTaps,
+      'handlePans': handlePans,
+      'handleRotation': handleRotation,
     });
   }
 
@@ -96,5 +103,11 @@ class ARSessionManager {
             label: 'HIDE',
             onPressed:
                 ScaffoldMessenger.of(buildContext).hideCurrentSnackBar)));
+  }
+
+  /// Returns a future ImageProvider that contains a screenshot of the current AR Scene
+  Future<ImageProvider> snapshot() async {
+    final result = await _channel.invokeMethod<Uint8List>('snapshot');
+    return MemoryImage(result!);
   }
 }

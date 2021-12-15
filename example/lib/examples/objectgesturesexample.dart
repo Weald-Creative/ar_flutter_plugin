@@ -14,13 +14,13 @@ import 'package:flutter/services.dart';
 import 'package:vector_math/vector_math_64.dart';
 import 'dart:math';
 
-class ScreenshotWidget extends StatefulWidget {
-  ScreenshotWidget({Key key}) : super(key: key);
+class ObjectGesturesWidget extends StatefulWidget {
+  ObjectGesturesWidget({Key key}) : super(key: key);
   @override
-  _ScreenshotWidgetState createState() => _ScreenshotWidgetState();
+  _ObjectGesturesWidgetState createState() => _ObjectGesturesWidgetState();
 }
 
-class _ScreenshotWidgetState extends State<ScreenshotWidget> {
+class _ObjectGesturesWidgetState extends State<ObjectGesturesWidget> {
   ARSessionManager arSessionManager;
   ARObjectManager arObjectManager;
   ARAnchorManager arAnchorManager;
@@ -38,7 +38,7 @@ class _ScreenshotWidgetState extends State<ScreenshotWidget> {
   Widget build(BuildContext context) {
     return Scaffold(
         appBar: AppBar(
-          title: const Text('Screenshots'),
+          title: const Text('Object Transformation Gestures'),
         ),
         body: Container(
             child: Stack(children: [
@@ -54,9 +54,6 @@ class _ScreenshotWidgetState extends State<ScreenshotWidget> {
                   ElevatedButton(
                       onPressed: onRemoveEverything,
                       child: Text("Remove Everything")),
-                  ElevatedButton(
-                      onPressed: onTakeScreenshot,
-                      child: Text("Take Screenshot")),
                 ]),
           )
         ])));
@@ -76,11 +73,18 @@ class _ScreenshotWidgetState extends State<ScreenshotWidget> {
           showPlanes: true,
           customPlaneTexturePath: "Images/triangle.png",
           showWorldOrigin: true,
+          handlePans: true,
+          handleRotation: true,
         );
     this.arObjectManager.onInitialize();
 
     this.arSessionManager.onPlaneOrPointTap = onPlaneOrPointTapped;
-    this.arObjectManager.onNodeTap = onNodeTapped;
+    this.arObjectManager.onPanStart = onPanStarted;
+    this.arObjectManager.onPanChange = onPanChanged;
+    this.arObjectManager.onPanEnd = onPanEnded;
+    this.arObjectManager.onRotationStart = onRotationStarted;
+    this.arObjectManager.onRotationChange = onRotationChanged;
+    this.arObjectManager.onRotationEnd = onRotationEnded;
   }
 
   Future<void> onRemoveEverything() async {
@@ -91,23 +95,6 @@ class _ScreenshotWidgetState extends State<ScreenshotWidget> {
       this.arAnchorManager.removeAnchor(anchor);
     });
     anchors = [];
-  }
-
-  Future<void> onTakeScreenshot() async {
-    var image = await this.arSessionManager.snapshot();
-    await showDialog(
-        context: context,
-        builder: (_) => Dialog(
-              child: Container(
-                decoration: BoxDecoration(
-                    image: DecorationImage(image: image, fit: BoxFit.cover)),
-              ),
-            ));
-  }
-
-  Future<void> onNodeTapped(List<String> nodes) async {
-    var number = nodes.length;
-    this.arSessionManager.onError("Tapped $number node(s)");
   }
 
   Future<void> onPlaneOrPointTapped(
@@ -138,17 +125,46 @@ class _ScreenshotWidgetState extends State<ScreenshotWidget> {
       } else {
         this.arSessionManager.onError("Adding Anchor failed");
       }
-      /*
-      // To add a node to the tapped position without creating an anchor, use the following code (Please mind: the function onRemoveEverything has to be adapted accordingly!):
-      var newNode = ARNode(
-          type: NodeType.localGLTF2,
-          uri: "Models/Chicken_01/Chicken_01.gltf",
-          scale: Vector3(0.2, 0.2, 0.2),
-          transformation: singleHitTestResult.worldTransform);
-      bool didAddWebNode = await this.arObjectManager.addNode(newNode);
-      if (didAddWebNode) {
-        this.nodes.add(newNode);
-      }*/
     }
+  }
+
+  onPanStarted(String nodeName) {
+    print("Started panning node " + nodeName);
+  }
+
+  onPanChanged(String nodeName) {
+    print("Continued panning node " + nodeName);
+  }
+
+  onPanEnded(String nodeName, Matrix4 newTransform) {
+    print("Ended panning node " + nodeName);
+    final pannedNode =
+        this.nodes.firstWhere((element) => element.name == nodeName);
+
+    /*
+    * Uncomment the following command if you want to keep the transformations of the Flutter representations of the nodes up to date
+    * (e.g. if you intend to share the nodes through the cloud)
+    */
+    //pannedNode.transform = newTransform;
+  }
+
+  onRotationStarted(String nodeName) {
+    print("Started rotating node " + nodeName);
+  }
+
+  onRotationChanged(String nodeName) {
+    print("Continued rotating node " + nodeName);
+  }
+
+  onRotationEnded(String nodeName, Matrix4 newTransform) {
+    print("Ended rotating node " + nodeName);
+    final rotatedNode =
+        this.nodes.firstWhere((element) => element.name == nodeName);
+
+    /*
+    * Uncomment the following command if you want to keep the transformations of the Flutter representations of the nodes up to date
+    * (e.g. if you intend to share the nodes through the cloud)
+    */
+    //rotatedNode.transform = newTransform;
   }
 }

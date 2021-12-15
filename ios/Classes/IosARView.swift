@@ -64,9 +64,17 @@ class IosARView: NSObject, FlutterPlatformView, ARSCNViewDelegate, UIGestureReco
         return self.sceneView
     }
 
+    func onDispose(_ result:FlutterResult) {
+                sceneView.session.pause()
+                self.sessionManagerChannel.setMethodCallHandler(nil)
+                self.objectManagerChannel.setMethodCallHandler(nil)
+                self.anchorManagerChannel.setMethodCallHandler(nil)
+                result(nil)
+            }
+
     func onSessionMethodCalled(_ call :FlutterMethodCall, _ result:FlutterResult) {
         let arguments = call.arguments as? Dictionary<String, Any>
-          
+
         switch call.method {
             case "init":
                 //self.sessionManagerChannel.invokeMethod("onError", arguments: ["SessionTEST from iOS"])
@@ -82,6 +90,10 @@ class IosARView: NSObject, FlutterPlatformView, ARSCNViewDelegate, UIGestureReco
                 } else {
                     result(nil)
                 }
+            case "dispose":
+                onDispose(result)
+                result(nil)
+                break
             default:
                 result(FlutterMethodNotImplemented)
                 break
@@ -537,7 +549,6 @@ class IosARView: NSObject, FlutterPlatformView, ARSCNViewDelegate, UIGestureReco
                 }
                 if (nodeHitResults.count != 0 && panningNode != nil) {
                     panningNodeCurrentWorldLocation = panningNode!.worldPosition
-                    // TODO: send the node name and the position back to Flutter controller callback
                     self.objectManagerChannel.invokeMethod("onPanStart", arguments: panningNode!.name) // Chaining of Array and Set is used to remove duplicates
                     return
                 }
@@ -570,8 +581,7 @@ class IosARView: NSObject, FlutterPlatformView, ARSCNViewDelegate, UIGestureReco
             // kill variables
             panStartLocation = nil
             panCurrentLocation = nil
-            // TODO: send the node name and the final position back to Flutter
-            self.objectManagerChannel.invokeMethod("onPanEnd", arguments: panningNode?.name)
+            self.objectManagerChannel.invokeMethod("onPanEnd", arguments: serializeLocalTransformation(node: panningNode))
             panningNode = nil
         }
     }
@@ -597,7 +607,6 @@ class IosARView: NSObject, FlutterPlatformView, ARSCNViewDelegate, UIGestureReco
                     }
                 }
                 if (nodeHitResults.count != 0 && panningNode != nil) {
-                    // TODO: send the node name and the position back to Flutter controller callback
                     self.objectManagerChannel.invokeMethod("onRotationStart", arguments: panningNode!.name) // Chaining of Array and Set is used to remove duplicates
                     return
                 }
@@ -622,13 +631,11 @@ class IosARView: NSObject, FlutterPlatformView, ARSCNViewDelegate, UIGestureReco
                     rotation = SCNQuaternion(x: 0, y: 0, z: 1, w: nodeRotation.w+Float(r2)) // quickest way to convert screen into world positions (meters)
                 }
                 panNode.rotation = rotation
-                // TODO: pass the velocity details back to Flutter controller callback
                 self.objectManagerChannel.invokeMethod("onRotationChange", arguments: panNode.name)
             }
 
             // update position of panning node if it has been created
             // panningNode.position + the gesture delta
-            // TODO: send the node name and the position back to Flutter
         }
         // State Ended
         if(recognizer.state == UIGestureRecognizer.State.ended)
@@ -636,8 +643,7 @@ class IosARView: NSObject, FlutterPlatformView, ARSCNViewDelegate, UIGestureReco
             // kill variables
             rotation = nil
             rotationVelocity = nil
-            // TODO: send the node name and the final position back to Flutter
-            self.objectManagerChannel.invokeMethod("onRotationEnd", arguments: panningNode?.name)
+            self.objectManagerChannel.invokeMethod("onRotationEnd", arguments: serializeLocalTransformation(node: panningNode))
             panningNode = nil
         }
     
